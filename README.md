@@ -19,9 +19,8 @@ npm run dev
 pnpm dev
 ```
 > [!TIP]
-> Рекомендуем использвовать PNPMS
+> Рекомендуем использвовать pnpm
 
 > [!IMPORTANT]
 > По вопросам сотрудничества и обнаруженным багам писать :
-
-##[Telegram] (https://web.telegram.org/a/#1718758153)
+> [Telegram] (https://web.telegram.org/a/#1718758153)
