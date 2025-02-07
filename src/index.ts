@@ -10,8 +10,8 @@ export class CapitalCityScraper {
         const response = await axios.get(url);
         const html = response.data;
 
+        const cheerio = require('cheerio');
         const $ = cheerio.load(html);
-
         const cityName = $('.mergedtoprow th:contains(Country) + td').text().trim();
         const createdAt = $('.mergedtoprow th:contains(Founded) + td').text().trim()
         const humansamout = $('.mergedrow th:contains(Total) + td').text().trim()
