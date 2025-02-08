@@ -11,7 +11,6 @@ async function fetchSchedule(answer:string | number) {
 url =` https://www.pilot-ipek.ru/raspo/${answer}%20февраля`
         console.log(url)
         const { data } = await axios.get(url);
-        
         const cheerio = require('cheerio')
         const $ = cheerio.load(data);
               // Объект для хранения расписания
@@ -90,6 +89,12 @@ url =` https://www.pilot-ipek.ru/raspo/${answer}%20февраля`
 //                     const teacher = lessonDetails[1] || ''; // Имя учителя (если есть)
 //                     const room = lessonDetails[lessonDetails.length - 1] || ''; // Кабинет (последний элемент)
 
+//                     // Находим или создаем группу в расписании
+//                     let group = schedule.groups.find(g => g.groupName === groupName);
+//                     if (!group) {
+//                         group = { groupName, lessons: [] };
+//                         schedule.groups.push(group);
+//                     }
 //                     // Находим или создаем группу в расписании
 //                     let group = schedule.groups.find(g => g.groupName === groupName);
 //                     if (!group) {
