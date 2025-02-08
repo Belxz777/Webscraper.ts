@@ -1,152 +1,119 @@
 import axios from 'axios';
+import { is } from 'cheerio/dist/commonjs/api/traversing';
 import * as readline from 'readline';
+
+const express = require('express');
+const dotenv = require('dotenv');
+
+dotenv.config();
+
+const app = express();
+const port = process.env.PORT;
+
+app.get('/getRaspo/bygroup', async (req, res) => {
+    const day = req.query.day;
+    const group = req.query.group;
+    const schedule = await fetchSchedule(day, false);
+    
+    // Directly filter the array returned by fetchSchedule
+    const groupsSchedule = schedule.filter(groupSchedule => groupSchedule.groupName === group);
+    
+    res.json(groupsSchedule);
+});
+
+app.get('/getRaspo/group/twoDay', async (req, res) => {
+    const firstDay = req.query.firstDay;
+    const secondDay = req.query.secondDay;
+    const schedule = await fetchSchedule([firstDay, secondDay], true);
+    res.json(schedule);
+});
+
+app.listen(port, () => {
+    console.log(`Сервер запущен по адресу http://localhost:${port}`);
+});
+
 const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
 });
-async function fetchSchedule(answer:string[] | number) {
+
+async function fetchSchedule(day: string | number | string[], isTwoDay: boolean) {
     try {
         let url = '';
-        const dateday = new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });     
-url =` https://www.pilot-ipek.ru/raspo/${answer}%20февраля`
-        console.log(url)
+        console.log(`Дата расписания: ${day}`);
+        url = `https://www.pilot-ipek.ru/raspo/${day}%20февраля`;
         const { data } = await axios.get(url);
-        const cheerio = require('cheerio')
+        const cheerio = require('cheerio');
         const $ = cheerio.load(data);
-              // Объект для хранения расписания
-        const schedule: { date: string; groups: { groupName: string; lessons: { pair: string; subject: string; teacher: string; room: string; }[]; }[] } = {
-            date: '10 февраля',
-            
-            groups: []
-        };     
-                  $('table').each((i, table) => {
-                      $(table).find('tr').filter((j, tr) => {
-                          return $(tr).find('td').text().trim() === '';
-                      }).remove();
-                  });
+
+        // Объект для хранения расписания
+        const schedule = [];
+
         // Получаем названия групп
         const groupsArray = $('table tbody tr td h1').map((i, el) => $(el).text().trim()).get();
-        console.log(groupsArray)  
-              const firstpairs = $('table tbody tr:nth-child(2) td:not(:first-child)').map((i, tdElement) => {
-               const lessonDetails = $(tdElement).find('p').map((j, el) => $(el).text().trim()).get();
-               const details = lessonDetails.length > 0 ? lessonDetails : ["нет пары"];
-             console.log(details)
-               return { details };
-           }).get();
 
-           const secondpairs = $('table tbody tr:nth-child(3) td:not(:first-child)').map((i, tdElement) => {
-               const lessonDetails = $(tdElement).find('p').map((j, el) => $(el).text().trim()).get();
-               const details = lessonDetails.length > 0 ? lessonDetails : ["нет пары"];
-               console.log(details)
-               return { details };
-           }).get();
+        const firstpairs = $('table tbody tr:nth-child(2) td:not(:first-child)').map((i, tdElement) => {
+            const lessonDetails = $(tdElement).find('p').map((j, el) => $(el).text().trim()).get();
+            const details = lessonDetails.length > 0 ? lessonDetails : null;
+            return { details };
+        }).get();
 
-           const thirdpairs = $('table tbody tr:nth-child(4) td:not(:first-child)').map((i, tdElement) => {
-               const lessonDetails = $(tdElement).find('p').map((j, el) => $(el).text().trim()).get();
-               const details = lessonDetails.length > 0 ? lessonDetails : ["нет пары"];
-               return { details };
-           }).get();
+        const secondpairs = $('table tbody tr:nth-child(3) td:not(:first-child)').map((i, tdElement) => {
+            const lessonDetails = $(tdElement).find('p').map((j, el) => $(el).text().trim()).get();
+            const details = lessonDetails.length > 0 ? lessonDetails : null;
+            return { details };
+        }).get();
 
-           const fourthpairs = $('table tbody tr:nth-child(5) td:not(:first-child)').map((i, tdElement) => {
-               const lessonDetails = $(tdElement).find('p').map((j, el) => $(el).text().trim()).get();
-               const details = lessonDetails.length > 0 ? lessonDetails : ["нет пары"];
-               return { details };
-           }).get();
-           const fifthpair = $('table tbody tr:nth-child(6) td:not(:first-child)').map((i, tdElement) => {
+        const thirdpairs = $('table tbody tr:nth-child(4) td:not(:first-child)').map((i, tdElement) => {
+            const lessonDetails = $(tdElement).find('p').map((j, el) => $(el).text().trim()).get();
+            const details = lessonDetails.length > 0 ? lessonDetails : null;
+            return { details };
+        }).get();
+
+        const fourthpairs = $('table tbody tr:nth-child(5) td:not(:first-child)').map((i, tdElement) => {
+            const lessonDetails = $(tdElement).find('p').map((j, el) => $(el).text().trim()).get();
+            const details = lessonDetails.length > 0 ? lessonDetails : null;
+            return { details };
+        }).get();
+
+        const fifthpair = $('table tbody tr:nth-child(6) td:not(:first-child)').map((i, tdElement) => {
             const lessonDetails = $(tdElement).find('p').map((j, el) => $(el).text().trim()).get();
             const details = lessonDetails.length > 0 ? lessonDetails : ["нет пары"];
             return { details };
         }).get();
+
         const sixpair = $('table tbody tr:nth-child(7) td:not(:first-child)').map((i, tdElement) => {
             const lessonDetails = $(tdElement).find('p').map((j, el) => $(el).text().trim()).get();
-            const details = lessonDetails.length > 0 ? lessonDetails : ["нет пары"];
+            const details = lessonDetails.length > 0 ? lessonDetails : null;
             return { details };
         }).get();
+
         const sevenpair = $('table tbody tr:nth-child(8) td:not(:first-child)').map((i, tdElement) => {
             const lessonDetails = $(tdElement).find('p').map((j, el) => $(el).text().trim()).get();
-            const details = lessonDetails.length > 0 ? lessonDetails : ["нет пары"];
+            const details = lessonDetails.length > 0 ? lessonDetails : null;
             return { details };
         }).get();
-           const groups = groupsArray.map((groupName, index) => ({
-               groupName,
-               isTalks: false,
-               pairs: {
-                   first: firstpairs[index] ? firstpairs[index].details : [],
-                   second: secondpairs[index] ? secondpairs[index].details : [],
-                   third: thirdpairs[index] ? thirdpairs[index].details : [],
-                   fourth: fourthpairs[index] ? fourthpairs[index].details : [],
-              fifthpair: fifthpair[index] ? fifthpair[index].details : [],
-              sixpair: sixpair[index] ? sixpair[index].details : [],
-              sevenpair: sevenpair[index] ? sevenpair[index].details : [],
-                }
-           }));
 
-        console.log("группы", groups, groups[groups.length - 1].pairs.sixpair);        // Проходим по всем парам
-        // $('table tbody tr').each((rowIndex, rowElement,colIndex) => {
-        //     if (rowIndex === 0) return; 
+        const groups = groupsArray.map((groupName, index) => ({
+            groupName,
+            isTalks: false,
+            pairs: {
+                first: firstpairs[index] ? firstpairs[index].details : [],
+                second: secondpairs[index] ? secondpairs[index].details : [],
+                third: thirdpairs[index] ? thirdpairs[index].details : [],
+                fourth: fourthpairs[index] ? fourthpairs[index].details : [],
+                fifthpair: fifthpair[index] ? fifthpair[index].details : null,
+                sixpair: sixpair[index] ? sixpair[index].details : [],
+                sevenpair: sevenpair[index] ? sevenpair[index].details : []
+            },
+        }));
 
-            
-//             const elbyindex = $(rowElement).find(`td:nth-child(${rowIndex}) p`).first().text().trim(); // Время пары
-// if(!elbyindex){
-// console.log("no first pair")
-// }
-//             console.log("pairtime",elbyindex,groups[rowIndex])
-//             $(rowElement).find('td').each((colIndex, colElement) => {
-//                 if (colIndex === 0) return; // Пропускаем первый столбец с временем пары
-//                 const groupName = groups[colIndex]; // Название группы
-//                 const lessonDetails = $(colElement).find('p').map((i, el) => $(el).text().trim()).get();
-
-//                 if (lessonDetails.length > 0) {
-//                     const subject = lessonDetails[0]; // Название предмета
-//                     const teacher = lessonDetails[1] || ''; // Имя учителя (если есть)
-//                     const room = lessonDetails[lessonDetails.length - 1] || ''; // Кабинет (последний элемент)
-
-//                     // Находим или создаем группу в расписании
-//                     let group = schedule.groups.find(g => g.groupName === groupName);
-//                     if (!group) {
-//                         group = { groupName, lessons: [] };
-//                         schedule.groups.push(group);
-//                     }
-//                     // Находим или создаем группу в расписании
-//                     let group = schedule.groups.find(g => g.groupName === groupName);
-//                     if (!group) {
-//                         group = { groupName, lessons: [] };
-//                         schedule.groups.push(group);
-//                     }
-
-                    // Добавляем урок в группу
-                    // group.lessons.push({  subject, teacher, room });
-        //         }
-        //     });
-        // });
-        const fs = require('fs')
-        fs.writeFileSync('./data.json', JSON.stringify(groups, null, 2))
-        return groups    } catch (error) {
-        console.error('Ошибка при получении расписания:', error);
-        return {};
+        console.log("группы", groups);
+        const fs = require('fs');
+        fs.writeFileSync(`./totalinfo${day}.json`, JSON.stringify(groups, null, 2));
+        return groups; // Return the array of groups
+    } catch (error) {
+        console.error(`Error fetching schedule: ${error.message}`);
+        return []; // Return an empty array in case of error
     }
 }
-async function main() {
-    rl.question("Введите число дня и месяца", async function(answer) {
-        rl.setPrompt(`Понельник?: ${answer}`);
-        let isLoading = true;
-        const loadingAnimation = ['|', '/', '-', '\\'];
-        let i = 0;
-    
-        const loadingInterval = setInterval(() => {
-            process.stdout.write(`\rLoading ${loadingAnimation[i++]}`);
-            i %= loadingAnimation.length;
-        }, 100);
-    
-        const schedule = await fetchSchedule(answer.split(' '));
-        isLoading = false;
-        clearInterval(loadingInterval);
-        process.stdout.write('\rLoading complete!\n');
-        console.log(
-        "no errors"
-        ); 
-      rl.close();
-      });// Выводим расписание в формате JSON
-}
-
-main();
