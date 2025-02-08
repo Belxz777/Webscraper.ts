@@ -4,7 +4,7 @@ const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
 });
-async function fetchSchedule(answer:string | number) {
+async function fetchSchedule(answer:string[] | number) {
     try {
         let url = '';
         const dateday = new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });     
@@ -16,6 +16,7 @@ url =` https://www.pilot-ipek.ru/raspo/${answer}%20февраля`
               // Объект для хранения расписания
         const schedule: { date: string; groups: { groupName: string; lessons: { pair: string; subject: string; teacher: string; room: string; }[]; }[] } = {
             date: '10 февраля',
+            
             groups: []
         };     
                   $('table').each((i, table) => {
@@ -24,8 +25,9 @@ url =` https://www.pilot-ipek.ru/raspo/${answer}%20февраля`
                       }).remove();
                   });
         // Получаем названия групп
-        const groupsArray = $('table tbody tr:first td h1').map((i, el) => $(el).text().trim()).get();
-           const firstpairs = $('table tbody tr:nth-child(2) td:not(:first-child)').map((i, tdElement) => {
+        const groupsArray = $('table tbody tr td h1').map((i, el) => $(el).text().trim()).get();
+        console.log(groupsArray)  
+              const firstpairs = $('table tbody tr:nth-child(2) td:not(:first-child)').map((i, tdElement) => {
                const lessonDetails = $(tdElement).find('p').map((j, el) => $(el).text().trim()).get();
                const details = lessonDetails.length > 0 ? lessonDetails : ["нет пары"];
              console.log(details)
@@ -55,7 +57,16 @@ url =` https://www.pilot-ipek.ru/raspo/${answer}%20февраля`
             const details = lessonDetails.length > 0 ? lessonDetails : ["нет пары"];
             return { details };
         }).get();
-
+        const sixpair = $('table tbody tr:nth-child(7) td:not(:first-child)').map((i, tdElement) => {
+            const lessonDetails = $(tdElement).find('p').map((j, el) => $(el).text().trim()).get();
+            const details = lessonDetails.length > 0 ? lessonDetails : ["нет пары"];
+            return { details };
+        }).get();
+        const sevenpair = $('table tbody tr:nth-child(8) td:not(:first-child)').map((i, tdElement) => {
+            const lessonDetails = $(tdElement).find('p').map((j, el) => $(el).text().trim()).get();
+            const details = lessonDetails.length > 0 ? lessonDetails : ["нет пары"];
+            return { details };
+        }).get();
            const groups = groupsArray.map((groupName, index) => ({
                groupName,
                isTalks: false,
@@ -65,11 +76,12 @@ url =` https://www.pilot-ipek.ru/raspo/${answer}%20февраля`
                    third: thirdpairs[index] ? thirdpairs[index].details : [],
                    fourth: fourthpairs[index] ? fourthpairs[index].details : [],
               fifthpair: fifthpair[index] ? fifthpair[index].details : [],
+              sixpair: sixpair[index] ? sixpair[index].details : [],
+              sevenpair: sevenpair[index] ? sevenpair[index].details : [],
                 }
            }));
 
-        console.log("группы", groups,groups[3].pairs.fifthpair);
-        // Проходим по всем парам
+        console.log("группы", groups, groups[groups.length - 1].pairs.sixpair);        // Проходим по всем парам
         // $('table tbody tr').each((rowIndex, rowElement,colIndex) => {
         //     if (rowIndex === 0) return; 
 
@@ -107,15 +119,16 @@ url =` https://www.pilot-ipek.ru/raspo/${answer}%20февраля`
         //         }
         //     });
         // });
-
-        return schedule;
-    } catch (error) {
+        const fs = require('fs')
+        fs.writeFileSync('./data.json', JSON.stringify(groups, null, 2))
+        return groups    } catch (error) {
         console.error('Ошибка при получении расписания:', error);
         return {};
     }
 }
 async function main() {
-    rl.question("На какую дату ", async function(answer) {
+    rl.question("Введите число дня и месяца", async function(answer) {
+        rl.setPrompt(`Понельник?: ${answer}`);
         let isLoading = true;
         const loadingAnimation = ['|', '/', '-', '\\'];
         let i = 0;
@@ -125,7 +138,7 @@ async function main() {
             i %= loadingAnimation.length;
         }, 100);
     
-        const schedule = await fetchSchedule(answer);
+        const schedule = await fetchSchedule(answer.split(' '));
         isLoading = false;
         clearInterval(loadingInterval);
         process.stdout.write('\rLoading complete!\n');
