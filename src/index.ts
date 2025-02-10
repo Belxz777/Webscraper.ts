@@ -1,119 +1,68 @@
 import axios from 'axios';
-import { is } from 'cheerio/dist/commonjs/api/traversing';
+import * as cheerio from 'cheerio';
+import * as fs from 'fs';
 import * as readline from 'readline';
 
-const express = require('express');
-const dotenv = require('dotenv');
-
-dotenv.config();
-
-const app = express();
-const port = process.env.PORT;
-
-app.get('/getRaspo/bygroup', async (req, res) => {
-    const day = req.query.day;
-    const group = req.query.group;
-    const schedule = await fetchSchedule(day, false);
-    
-    // Directly filter the array returned by fetchSchedule
-    const groupsSchedule = schedule.filter(groupSchedule => groupSchedule.groupName === group);
-    
-    res.json(groupsSchedule);
-});
-
-app.get('/getRaspo/group/twoDay', async (req, res) => {
-    const firstDay = req.query.firstDay;
-    const secondDay = req.query.secondDay;
-    const schedule = await fetchSchedule([firstDay, secondDay], true);
-    res.json(schedule);
-});
-
-app.listen(port, () => {
-    console.log(`Сервер запущен по адресу http://localhost:${port}`);
-});
-
+// Функция для создания интерфейса чтения из терминала
 const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
 });
 
-async function fetchSchedule(day: string | number | string[], isTwoDay: boolean) {
-    try {
-        let url = '';
-        console.log(`Дата расписания: ${day}`);
-        url = `https://www.pilot-ipek.ru/raspo/${day}%20февраля`;
-        const { data } = await axios.get(url);
-        const cheerio = require('cheerio');
-        const $ = cheerio.load(data);
+// Функция для получения HTML-кода
+async function fetchHTML(url) {
+    const { data } = await axios.get(url);
+    return data;
+}
 
-        // Объект для хранения расписания
+// Функция для парсинга таблицы
+function parseTable(table) {
+    const groups = [];
+    const $ = cheerio.load(table);
+    $(table).find('tr').each((rowIndex, row) => {
+        if (rowIndex === 0) {
+            $(row).find('td:not(:first-child) h1').each((i, el) => {
+                groups.push({
+                    groupName: $(el).text().trim(),
+                    pairs: []
+                });
+            });
+        } else {
+            $(row).find('td:not(:first-child)').each((i, td) => {
+                const lessonDetails = $(td).find('p').map((j, el) => $(el).text().trim()).get();
+                if (groups[i]) {
+                    groups[i].pairs.push(lessonDetails.length > 0 ? lessonDetails : null);
+                }
+            });
+        }
+    });
+    return groups;
+}
+
+// Основная функция
+async function fetchSchedule(date, month) {
+    try {
+        const url = `https://www.pilot-ipek.ru/raspo/11%20%20февраля`
+        const html = await fetchHTML(url);
+        const $ = cheerio.load(html);
         const schedule = [];
 
-        // Получаем названия групп
-        const groupsArray = $('table tbody tr td h1').map((i, el) => $(el).text().trim()).get();
+        $('table').each((tableIndex, table) => {
+            const tableData = parseTable(table);
+            schedule.push(...tableData);
+        });
 
-        const firstpairs = $('table tbody tr:nth-child(2) td:not(:first-child)').map((i, tdElement) => {
-            const lessonDetails = $(tdElement).find('p').map((j, el) => $(el).text().trim()).get();
-            const details = lessonDetails.length > 0 ? lessonDetails : null;
-            return { details };
-        }).get();
-
-        const secondpairs = $('table tbody tr:nth-child(3) td:not(:first-child)').map((i, tdElement) => {
-            const lessonDetails = $(tdElement).find('p').map((j, el) => $(el).text().trim()).get();
-            const details = lessonDetails.length > 0 ? lessonDetails : null;
-            return { details };
-        }).get();
-
-        const thirdpairs = $('table tbody tr:nth-child(4) td:not(:first-child)').map((i, tdElement) => {
-            const lessonDetails = $(tdElement).find('p').map((j, el) => $(el).text().trim()).get();
-            const details = lessonDetails.length > 0 ? lessonDetails : null;
-            return { details };
-        }).get();
-
-        const fourthpairs = $('table tbody tr:nth-child(5) td:not(:first-child)').map((i, tdElement) => {
-            const lessonDetails = $(tdElement).find('p').map((j, el) => $(el).text().trim()).get();
-            const details = lessonDetails.length > 0 ? lessonDetails : null;
-            return { details };
-        }).get();
-
-        const fifthpair = $('table tbody tr:nth-child(6) td:not(:first-child)').map((i, tdElement) => {
-            const lessonDetails = $(tdElement).find('p').map((j, el) => $(el).text().trim()).get();
-            const details = lessonDetails.length > 0 ? lessonDetails : ["нет пары"];
-            return { details };
-        }).get();
-
-        const sixpair = $('table tbody tr:nth-child(7) td:not(:first-child)').map((i, tdElement) => {
-            const lessonDetails = $(tdElement).find('p').map((j, el) => $(el).text().trim()).get();
-            const details = lessonDetails.length > 0 ? lessonDetails : null;
-            return { details };
-        }).get();
-
-        const sevenpair = $('table tbody tr:nth-child(8) td:not(:first-child)').map((i, tdElement) => {
-            const lessonDetails = $(tdElement).find('p').map((j, el) => $(el).text().trim()).get();
-            const details = lessonDetails.length > 0 ? lessonDetails : null;
-            return { details };
-        }).get();
-
-        const groups = groupsArray.map((groupName, index) => ({
-            groupName,
-            isTalks: false,
-            pairs: {
-                first: firstpairs[index] ? firstpairs[index].details : [],
-                second: secondpairs[index] ? secondpairs[index].details : [],
-                third: thirdpairs[index] ? thirdpairs[index].details : [],
-                fourth: fourthpairs[index] ? fourthpairs[index].details : [],
-                fifthpair: fifthpair[index] ? fifthpair[index].details : null,
-                sixpair: sixpair[index] ? sixpair[index].details : [],
-                sevenpair: sevenpair[index] ? sevenpair[index].details : []
-            },
-        }));
-
-        console.log("группы", groups);
-        const fs = require('fs');
-        fs.writeFileSync(`./totalinfo${day}.json`, JSON.stringify(groups, null, 2));
-        return groups; // Return the array of groups
+        fs.writeFileSync('schedule.json', JSON.stringify(schedule, null, 2));
+        console.log('Данные успешно сохранены в schedule.json');
     } catch (error) {
-        console.error(`Error fetching schedule: ${error.message}`);
-        return []; // Return an empty array in case of error
+        console.error('Ошибка при получении данных:', error.message);
     }
 }
+
+// Запрос даты и месяца у пользователя
+rl.question('Введите дату (например, 10): ', (date) => {
+    rl.question('Введите месяц (например, февраль): ', (month) => {
+        fetchSchedule(date, month);
+        rl.close();
+    });
+});
