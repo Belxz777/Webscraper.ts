@@ -6,7 +6,13 @@ const express = require('express')
 const app = express()
 const  cors = require('cors')
 
+//! добавить авто фетчинг расписания 
 
+//! учесть кейс с расписание на две даты
+
+//& задеплоить в yandex-cloud serverless functions
+
+// * продумать более крутой функционал
 app.use(cors())
 // Define middleware for all routes
 
