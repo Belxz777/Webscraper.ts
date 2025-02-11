@@ -18,9 +18,9 @@ npm run dev
 
 pnpm dev
 ```
+## API DOCS https://documenter.getpostman.com/view/29025992/2sAYXBFf1E
 > [!TIP]
 > Рекомендуем использвовать pnpm
->API DOCS https://documenter.getpostman.com/view/29025992/2sAYXBFf1E
 > [!IMPORTANT]
 > По вопросам сотрудничества и обнаруженным багам писать :
 > [Telegram](https://web.telegram.org/a/#1718758153)
