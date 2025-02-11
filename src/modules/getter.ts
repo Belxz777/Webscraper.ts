@@ -1,0 +1,108 @@
+import axios from 'axios';
+import * as cheerio from 'cheerio';
+import * as fs from 'fs';
+import { url } from 'inspector';
+import { hrtime } from 'process';
+import * as readline from 'readline';
+
+// Функция для создания интерфейса чтения из терминала
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+});
+
+// Функция для получения HTML-кода
+async function fetchHTML(url): Promise<string | null> {
+    const { data} = await axios.get(url);
+if (!data) {
+    console.log('Ошибка при получении HTML-кода');
+    return null;
+}
+    return data;
+}
+
+// Функция для парсинга таблицы
+function parseTable(table) {
+    const groups = [];
+    const $ = cheerio.load(table);
+    $(table).find('tr').each((rowIndex, row) => {
+        if (rowIndex === 0) {
+            $(row).find('td:not(:first-child) h1').each((i, el) => {
+                groups.push({
+                    groupName: $(el).text().trim(),
+                    pairs: []
+                });
+            });
+        } else {
+            $(row).find('td:not(:first-child)').each((i, td) => {
+                const lessonDetails = $(td).find('p').map((j, el) => $(el).text().trim()).get();
+                if (groups[i]) {
+                    groups[i].pairs.push(lessonDetails.length > 0 ? lessonDetails : null);
+                }
+            });
+        }
+    });
+    return groups;
+}
+
+// Основная функция
+export async function totalSchedule(day:number,month:string):Promise<any>  {
+    try {
+        // %20  - пробел , проблема в том что иногда в ссылке 
+        // находиться два пробела между 11 и февраля , а иногда один
+    // также бывают случаи когда в url находитться две даты 
+    // запятая никак не кодируется кодируется только пробел
+   const probel = '%20'
+   let url:string;
+   let html;
+   url = `https://www.pilot-ipek.ru/raspo/${day}${probel}${month}`;
+   html = await fetchHTML(url);
+   if (!html) {
+       url = `https://www.pilot-ipek.ru/raspo/${day}${probel}${probel}${month}`;
+       console.log("Ошибка с url возможно нет пробела , пробую добавить ...")
+       html = await fetchHTML(url); // Retry fetching with the updated URL
+   }
+   if (!html) {
+       console.error("Повторная ошибка пожалуйста проверьте правильность ввода")
+       return {
+           status :"Повторная ошибка пожалуйста проверьте правильность ввода"
+       }  
+   }
+   console.log(url)
+   const $ = cheerio.load(html);
+   const schedule = [];
+   $('table').each((tableIndex, table) => {
+       const tableData = parseTable(table);
+       schedule.push(...tableData);
+   });
+   console.log({status:200,details:`Отправлено полное расписание  за ${day} ${month}`}) 
+   fs.writeFileSync(`data/schedule${day}${month}.json`, JSON.stringify(schedule, null, 2));      
+   return schedule;
+} catch (error) {
+   if (error.response && error.response.status === 400) {
+   const probel = '%20'
+       let url = `https://www.pilot-ipek.ru/raspo/${day}${probel}${probel}${month}`;
+       console.log("Получен статус 400, пробую добавить еще один пробел ...",url)
+      let  html = await fetchHTML(url); // Retry fetching with the updated URL
+       if (!html) {
+           console.error("Ошибка при повторном запросе, пожалуйста проверьте правильность ввода")
+           return {
+               status :"Ошибка при повторном запросе, пожалуйста проверьте правильность ввода",
+           }
+       }
+       const $ = cheerio.load(html);
+       const schedule = [];
+       $('table').each((tableIndex, table) => {
+           const tableData = parseTable(table);
+           schedule.push(...tableData);
+       });
+       console.log({status:200,details:`Отправлено полное расписание  за ${day} ${month}`}) 
+       fs.writeFileSync(`data/schedule${day}${month}.json`, JSON.stringify(schedule, null, 2));      
+        return schedule;
+   }
+   console.error('Ошибка при получении данных:', error.message);
+   return {
+       status :"Ошибка при получении данных",
+       error: error.message,
+   }
+}}
