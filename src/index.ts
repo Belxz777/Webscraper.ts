@@ -1,24 +1,35 @@
+import { getGroupNames } from "./modules/allgroup"
 import { totalSchedule } from "./modules/getter"
 import { getGroupSchedule } from "./modules/groupgetter"
 
 const express = require('express')
 const app = express()
+const  cors = require('cors')
 
+
+app.use(cors())
 // Define middleware for all routes
 
 // Define route for GET request on path '/'
 app.get('/getScedule', async (request, response) =>{
-    const respons= await totalSchedule(request.query.day,request.query.month)
-    response.json({ respons })  
+    const res= await totalSchedule(request.query.day,request.query.month)
+    response.json({ res })  
 })
 app.get('/getScedule/group', async (request, response) =>{
-    const respons= await getGroupSchedule(request.query.group,request.query.day,request.query.month)
-    response.json({ respons })  
+    const res= await getGroupSchedule(request.query.group,request.query.day,request.query.month)
+    if (res.status) {
+        return response.status(400).json(res); // Возвращаем ошибку с кодом 400
+    }
+    response.json(res)  
+})
+app.get('/groups', async (request, response) =>{
+    const groups= await getGroupNames()
+    response.json({ groups })  
 })
 
 
 
-// Start the server on port 3000
+
 app.listen(
  5000, 
    () => console.log(`Server listening on port 5000.`));

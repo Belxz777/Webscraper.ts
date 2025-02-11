@@ -1,21 +1,31 @@
-// groupSchedule.js
-import { group } from 'console';
 import fs from 'fs';
 
-// Функция для получения расписания группы
-export function getGroupSchedule(groupName,day,month) {
+export function getGroupSchedule(groupName, day, month) {
     try {
-        const data = fs.readFileSync(`data/schedule${day}${month}.json`, 'utf8');
-      if(!data) {
-        console.log("Ошибка при чтении файла")
-        return {
-            status :"Ошибка при чтении файла , возможно расписани еще нет"
+        const filePath =`data/schedule${day}${month}.json`;
+      console.log(filePath);
+        if (!fs.existsSync(filePath)) {
+            console.log("Файл не найден:", filePath);
+            return { status: "Ошибка: файл расписания не найден." };
         }
-      }
+
+        const data = fs.readFileSync(filePath, 'utf8');
+        if (!data) {
+            console.log("Ошибка при чтении файла");
+            return { status: "Ошибка при чтении файла, возможно расписание еще нет" };
+        }
+
         const schedule = JSON.parse(data);
-return schedule.find(group => group.groupName == groupName);
+        console.log(schedule);
+        const groupSchedule = schedule.find(group => group.groupName === groupName);
+        
+        if (!groupSchedule) {
+            return { status: "Группа не найдена" };
+        }
+
+        return groupSchedule;
     } catch (error) {
         console.error('Ошибка при чтении файла:', error.message);
+        return { status: "Ошибка сервера" };
     }
 }
-// Экспорт функции
