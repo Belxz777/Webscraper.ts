@@ -5,7 +5,8 @@ import { getGroupSchedule } from "./modules/groupgetter"
 const express = require('express')
 const app = express()
 const  cors = require('cors')
-
+const serverless = require('serverless-http');
+app.use(express.urlencoded({ extended: true }));
 //! добавить авто фетчинг расписания 
 
 //! учесть кейс с расписание на две даты
@@ -37,6 +38,7 @@ app.get('/groups', async (request, response) =>{
 
 
 
-app.listen(
- 5000, 
-   () => console.log(`Server listening on port 5000.`));
+// app.listen(
+//  5000, 
+//    () => console.log(`Server listening on port 5000.`));
+   module.exports.handler = serverless(app);
