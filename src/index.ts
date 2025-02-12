@@ -24,7 +24,8 @@ app.get('/getScedule', async (request, response) =>{
 app.get('/getScedule/group', async (request, response) =>{
     const res= await getGroupSchedule(request.query.group,request.query.day,request.query.month)
     if (res.status) {
-        return response.status(400).json(res); // Возвращаем ошибку с кодом 400
+        return  response.status(400).json({ error: res.status });
+        // Возвращаем ошибку с кодом 400
     }
     response.json(res)  
 })

@@ -1,18 +1,13 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import * as fs from 'fs';
-import { url } from 'inspector';
-import { hrtime } from 'process';
-import * as readline from 'readline';
+import { coupleDates } from './coupleDates';
 
 // Функция для создания интерфейса чтения из терминала
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-});
+
 
 // Функция для получения HTML-кода
-async function fetchHTML(url): Promise<string | null> {
+export async function fetchHTML(url): Promise<string | null> {
     const { data} = await axios.get(url);
 if (!data) {
     console.log('Ошибка при получении HTML-кода');
@@ -22,7 +17,7 @@ if (!data) {
 }
 
 // Функция для парсинга таблицы
-function parseTable(table) {
+export function parseTable(table) {
     const groups = [];
     const $ = cheerio.load(table);
     $(table).find('tr').each((rowIndex, row) => {
@@ -46,13 +41,22 @@ function parseTable(table) {
 }
 
 // Основная функция
-export async function totalSchedule(day:number,month:string):Promise<any>  {
+export async function totalSchedule(day:number | string,month:string):Promise<any>  {
     try {
         // %20  - пробел , проблема в том что иногда в ссылке 
         // находиться два пробела между 11 и февраля , а иногда один
     // также бывают случаи когда в url находитться две даты 
     // запятая никак не кодируется кодируется только пробел
-   const probel = '%20'
+   if (typeof day == "string" && day.match(',')) {
+    let days
+     days = day.split(',')
+ const schedule = coupleDates(days[0],days[1],month)
+ return {
+    "status":200,
+    "details":"Кейс отыгран"
+ }
+}
+    const probel = '%20'
    let url:string;
    let html;
    url = `https://www.pilot-ipek.ru/raspo/${day}${probel}${month}`;
