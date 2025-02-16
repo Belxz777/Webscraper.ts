@@ -1,21 +1,16 @@
-const EasyYandexS3 = require('easy-yandex-s3').default;
-let s3 = new EasyYandexS3({
-    auth: {
-      accessKeyId: 'YCAJEmmhVKiQFxqCY0IXE02lH',
-      secretAccessKey: 'YCMo3gC5oNmnCCC4Aby6G624qNdGD_9EPCYYiKgb',
-    },
-    Bucket: 'schedulesjsons', // например, "my-storage",
-    debug: true, // Дебаг в консоли, потом можете удалить в релизе
-  }); 
+import fs from 'fs';
+
 export function getGroupSchedule(groupName, day, month) {
     try {
         const filePath =`data/schedule${day}${month}.json`;
       console.log(filePath);
-    if (!s3.GetList(filePath)) {
+        if (!fs.existsSync(filePath)) {
             console.log("Файл не найден:", filePath);
             return { status: "Ошибка: файл расписания не найден." };
         }
-            if (!data) {
+
+        const data = fs.readFileSync(filePath, 'utf8');
+        if (!data) {
             console.log("Ошибка при чтении файла");
             return { status: "Ошибка при чтении файла, возможно расписание еще нет" };
         }
