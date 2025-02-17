@@ -17,6 +17,8 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "openai": "^4.83.0",
-    "serverless-http": "^3.2.0"
+    "sequelize": "^6.37.5",
+    "serverless-http": "^3.2.0",
+    "sqlite3": "^5.1.7"
   }
 }
