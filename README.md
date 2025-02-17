@@ -24,3 +24,5 @@ pnpm dev
 > [!IMPORTANT]
 > По вопросам сотрудничества и обнаруженным багам писать :
 > [Telegram](https://web.telegram.org/a/#1718758153)
+
+https://schedule-ipek.vercel.app/
