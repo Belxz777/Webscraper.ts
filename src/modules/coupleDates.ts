@@ -2,7 +2,6 @@ import { fetchHTML, parseTable } from "./getter";
 import axios from 'axios';
 import * as fs from 'fs';
 import * as cheerio from 'cheerio';
-import { next } from "cheerio/dist/commonjs/api/traversing";
 async function coupleDates(
   date1: string, date2: string,
 month:string
