@@ -3,6 +3,7 @@ import * as cheerio from 'cheerio';
 import * as fs from 'fs';
 import { coupleDates } from './coupleDates';
 
+
 // Функция для создания интерфейса чтения из терминала
 
 
@@ -80,7 +81,7 @@ export async function totalSchedule(day:number | string,month:string):Promise<an
        schedule.push(...tableData);
    });
    console.log({status:200,details:`Отправлено полное расписание  за ${day} ${month}`}) 
-   fs.writeFileSync(`data/schedule${day}${month}.json`, JSON.stringify(schedule, null, 2));      
+// saveScheduleToDB(schedule)
    return schedule;
 } catch (error) {
    if (error.response && error.response.status === 400) {
@@ -89,7 +90,6 @@ export async function totalSchedule(day:number | string,month:string):Promise<an
        console.log("Получен статус 400, пробую добавить еще один пробел ...",url)
       let  html = await fetchHTML(url); // Retry fetching with the updated URL
        if (!html) {
-           console.error("Ошибка при повторном запросе, пожалуйста проверьте правильность ввода")
            return {
                status :"Ошибка при повторном запросе, пожалуйста проверьте правильность ввода",
            }
@@ -104,7 +104,6 @@ export async function totalSchedule(day:number | string,month:string):Promise<an
        fs.writeFileSync(`data/schedule${day}${month}.json`, JSON.stringify(schedule, null, 2));      
         return schedule;
    }
-   console.error('Ошибка при получении данных:', error.message);
    return {
        status :"Ошибка при получении данных",
        error: error.message,

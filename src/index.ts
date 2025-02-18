@@ -1,7 +1,7 @@
 import { getGroupNames } from "./modules/allgroup"
-import { totalSchedule } from "./modules/getter"
+import { totalSchedule } from "./modules/total"
 import { getGroupSchedule } from "./modules/groupgetter"
-
+const { Sequelize, DataTypes } = require('sequelize');
 const express = require('express')
 const app = express()
 const  cors = require('cors')
@@ -14,6 +14,27 @@ app.use(express.urlencoded({ extended: true }));
 //& задеплоить в yandex-cloud serverless functions
 
 // * продумать более крутой функционал
+const sequelize = new Sequelize({
+    dialect: 'sqlite',
+    storage: './database.sqlite', // Файл базы данных
+  });
+
+  // export const Sche = sequelize.define({
+  //   day:DataTypes.NUMBER,
+  //   month:DataTypes.STRING,
+  //   groupName:DataTypes.STRING,
+  // })
+  // const Pair = sequelize.define({
+  //   pair:DataTypes.STRING,
+  //   teacher:DataTypes.STRING,
+  //   room:DataTypes.STRING,
+  //   type:DataTypes.STRING,
+  // })
+  // Pair.belongsTo(Sche,{foreignKey:'groupName'})
+  // // Синхронизация базы данных
+  // sequelize.sync({ force: true }).then(() => {
+  //   console.log('База данных синхронизирована');
+  // });
 app.use(cors())
 // Define middleware for all routes
 
